@@ -3,6 +3,8 @@ package Ref;
 import java.io.Serializable;
 
 public class Ric implements Serializable{
+
+	//TODO::make these private
 	public String ric;
 	public Ric(String ric){
 		this.ric=ric;

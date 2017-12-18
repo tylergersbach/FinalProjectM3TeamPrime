@@ -21,27 +21,35 @@ public class SampleClient extends Mock implements Client{
 			
 	public SampleClient(int port) throws IOException{
 		//OM will connect to us
+		//TODO::Maybe add try catch? WHat if we cannot connect?
 		omConn=new ServerSocket(port).accept();
 		System.out.println("OM connected to client port "+port);
 	}
-	
+
+	//I believe this connects to the OM and sends the data
 	@Override
 	public int sendOrder(Object par0)throws IOException{
 		int size=RANDOM_NUM_GENERATOR.nextInt(5000);
+
+		//TODO::change this to price? Change to float?
 		int instid=RANDOM_NUM_GENERATOR.nextInt(3);
 		Instrument instrument=INSTRUMENTS[RANDOM_NUM_GENERATOR.nextInt(INSTRUMENTS.length)];
+
 		NewOrderSingle nos=new NewOrderSingle(size,instid,instrument);
 		
 		show("sendOrder: id="+id+" size="+size+" instrument="+INSTRUMENTS[instid].toString());
 		OUT_QUEUE.put(id,nos);
 		if(omConn.isConnected()){
 			ObjectOutputStream os=new ObjectOutputStream(omConn.getOutputStream());
+
+			//TODO::I think this is par0?????
 			os.writeObject("newOrderSingle");
 			//os.writeObject("35=D;");
 			os.writeInt(id);
 			os.writeObject(nos);
 			os.flush();
 		}
+
 		return id++;
 	}
 

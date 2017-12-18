@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 public class Instrument implements Serializable{
+	//TODO::make these private
 	long id;
 	String name;
 	Ric ric;
@@ -17,6 +18,7 @@ public class Instrument implements Serializable{
 		return ric.ric;
 	}
 }
+
 class EqInstrument extends Instrument{
 	Date exDividend;
 
@@ -24,6 +26,7 @@ class EqInstrument extends Instrument{
 		super(ric);
 	}
 }
+
 class FutInstrument extends Instrument{
 	Date expiry;
 	Instrument underlier;

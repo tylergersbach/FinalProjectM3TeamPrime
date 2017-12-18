@@ -26,6 +26,7 @@ public class OrderManager {
 	private Socket[] orderRouters; //debugger will skip these lines as they dissapear at compile time into 'the object'/stack
 	private Socket[] clients;
 	private Socket trader;
+
 	private Socket connect(InetSocketAddress location) throws InterruptedException{
 		boolean connected=false;
 		int tryCounter=0;
@@ -112,6 +113,7 @@ public class OrderManager {
 			}
 		}
 	}
+
 	private void newOrder(int clientId, int clientOrderId, NewOrderSingle nos) throws IOException{
 		orders.put(id, new Order(clientId, clientOrderId, nos.instrument, nos.size));
 		//send a message to the client with 39=A; //OrdStatus is Fix 39, 'A' is 'Pending New'
@@ -125,6 +127,7 @@ public class OrderManager {
 		//don't do anything else with the order, as we are simulating high touch orders and so need to wait for the trader to accept the order
 		id++;
 	}
+
 	private void sendOrderToTrader(int id,Order o,Object method) throws IOException{
 		ObjectOutputStream ost=new ObjectOutputStream(trader.getOutputStream());
 		ost.writeObject(method);
@@ -132,6 +135,7 @@ public class OrderManager {
 		ost.writeObject(o);
 		ost.flush();
 	}
+
 	public void acceptOrder(int id) throws IOException{
 		Order o=orders.get(id);
 		if(o.OrdStatus!='A'){ //Pending New
@@ -147,6 +151,7 @@ public class OrderManager {
 
 		price(id,o);
 	}
+
 	public void sliceOrder(int id,int sliceSize) throws IOException{
 		Order o=orders.get(id);
 		//slice the order. We have to check this is a valid size.
@@ -176,9 +181,11 @@ public class OrderManager {
 			}
 		}
 	}
+
 	private void cancelOrder(){
 		
 	}
+
 	private void newFill(int id,int sliceId,int size,double price) throws IOException{
 		Order o=orders.get(id);
 		o.slices.get(sliceId).createFill(size, price);
@@ -187,6 +194,8 @@ public class OrderManager {
 		}
 		sendOrderToTrader(id, o, TradeScreen.api.fill);
 	}
+
+	//TODO::this might mean we are selling the order
 	private void routeOrder(int id,int sliceId,int size,Order order) throws IOException{
 		for(Socket r:orderRouters){
 			ObjectOutputStream os=new ObjectOutputStream(r.getOutputStream());
@@ -201,6 +210,8 @@ public class OrderManager {
 		order.bestPrices=new double[orderRouters.length];
 		order.bestPriceCount=0;
 	}
+
+	//TODO::this is looking for the best price, maybe rename this to lookForBestPrice()
 	private void reallyRouteOrder(int sliceId,Order o) throws IOException{
 		//TODO this assumes we are buying rather than selling
 		int minIndex=0;
@@ -219,10 +230,12 @@ public class OrderManager {
 		os.writeObject(o.instrument);
 		os.flush();
 	}
+
 	private void sendCancel(Order order,Router orderRouter){
 		//orderRouter.sendCancel(order);
 		//order.orderRouter.writeObject(order);
 	}
+
 	private void price(int id,Order o) throws IOException{
 		liveMarketData.setPrice(o);
 		sendOrderToTrader(id, o, TradeScreen.api.price);
