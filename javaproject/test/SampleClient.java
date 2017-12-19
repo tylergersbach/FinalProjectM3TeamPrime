@@ -13,14 +13,14 @@ import OrderManager.Order;
 import Ref.Instrument;
 import Ref.Ric;
 
-public class SampleClient extends Mock implements Client{
+public class SampleClient implements Client{
 	private static final Random RANDOM_NUM_GENERATOR = new Random();
 	private static final Instrument[] INSTRUMENTS = {new Instrument(new Ric("VOD.L")), new Instrument(new Ric("BP.L")), new Instrument(new Ric("BT.L"))};
 	private static final Map OUT_QUEUE = new HashMap(); //queue for outgoing orders		//TODO::Changed from HashMap OUT_QUE to Map OUT_QUE
 	private int id = 0; //message id number
 	private Socket orderManagerConnection; //connection to order manager
 			
-	public SampleClient(int port) throws IOException{
+	SampleClient(int port) throws IOException{
 		//OM will connect to us
 		orderManagerConnection = new ServerSocket(port).accept();
 		System.out.println("OM connected to client port "+port);
@@ -125,6 +125,9 @@ public class SampleClient extends Mock implements Client{
 	void newOrderSingleAcknowledgement(int OrderId){
 		System.out.println(Thread.currentThread().getName()+" called newOrderSingleAcknowledgement");
 		//do nothing, as not recording so much state in the NOS class at present
+	}
+	private static void show(String out){
+		System.err.println(Thread.currentThread().getName()+":"+out);
 	}
 
 /*listen for connections

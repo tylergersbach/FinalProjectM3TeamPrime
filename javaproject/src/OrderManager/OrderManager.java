@@ -28,24 +28,6 @@ public class OrderManager {
 	private Socket[] clients;
 	private Socket trader;
 
-	private Socket connect(InetSocketAddress location) throws InterruptedException{
-		boolean connected = false;
-		int tryCounter = 0;
-
-		while(!connected && tryCounter < 600){
-			try{
-				Socket s = new Socket(location.getHostName(), location.getPort());
-				s.setKeepAlive(true);
-				return s;
-			}catch (IOException e) {
-				Thread.sleep(1000);
-				tryCounter++;
-			}
-		}
-
-		System.out.println("Failed to connect to " + location.toString());
-		return null;
-	}
 
 	//TODO::Break this method up into smaller methods
 	//@param args the command line arguments
@@ -134,6 +116,25 @@ public class OrderManager {
 				}
 			}
 		}
+	}
+
+	private Socket connect(InetSocketAddress location) throws InterruptedException{
+		boolean connected = false;
+		int tryCounter = 0;
+
+		while(!connected && tryCounter < 600){
+			try{
+				Socket s = new Socket(location.getHostName(), location.getPort());
+				s.setKeepAlive(true);
+				return s;
+			}catch (IOException e) {
+				Thread.sleep(1000);
+				tryCounter++;
+			}
+		}
+
+		System.out.println("Failed to connect to " + location.toString());
+		return null;
 	}
 
 	private void newOrder(int clientId, int clientOrderId, NewOrderSingle nos) throws IOException{
