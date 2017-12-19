@@ -9,8 +9,7 @@ public class Main{
 
 		//TODO::consistency?
 		//start sample clients
-		MockClient c1 = new MockClient("Client 1",2000);
-		c1.start();
+		(new MockClient("Client 1",2000)).start();
 		//(new MockClient("Client 1",2000)).start();
 		(new MockClient("Client 2",2001)).start();
 		
