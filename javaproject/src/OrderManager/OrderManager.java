@@ -28,6 +28,8 @@ public class OrderManager {
 	private Socket[] orderRouters; //debugger will skip these lines as they dissapear at compile time into 'the object'/stack
 	private Socket[] clients;
 	private Socket trader;
+	private ObjectInputStream isc;
+	private ObjectInputStream isr;
 
 
 	//TODO::Break this method up into smaller methods
@@ -71,13 +73,13 @@ public class OrderManager {
 			client = this.clients[clientId];
 			if (0 < client.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
 				//TODO::Change this so that it is only created once
-				ObjectInputStream is = new ObjectInputStream(client.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
-				String method = (String)is.readObject();
+                isc = new ObjectInputStream(client.getInputStream());
+				String method = (String)isc.readObject();
 				System.out.println(Thread.currentThread().getName()+" calling "+method);
 				switch(method){ //determine the type of message and process it
 					//call the newOrder message with the clientId and the message (clientMessageId,NewOrderSingle)
 					case "newOrderSingle":
-						newOrder(clientId, is.readInt(), (NewOrderSingle)is.readObject());
+						newOrder(clientId, isc.readInt(), (NewOrderSingle)isc.readObject());
 						break;
 					//TODO create a default case which errors with "Unknown message type"+...
 				}
@@ -92,13 +94,13 @@ public class OrderManager {
 			router = this.orderRouters[routerId];
 			if (0 < router.getInputStream().available()){ //if we have part of a message ready to read, assuming this doesn't fragment messages
 				//TODO::Change this so that it is only created once
-				ObjectInputStream is = new ObjectInputStream(router.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
-				String method = (String)is.readObject();
+                isr = new ObjectInputStream(router.getInputStream());
+				String method = (String)isr.readObject();
 				System.out.println(Thread.currentThread().getName()+" calling "+method);
 				switch(method){ //determine the type of message and process it
 					case "bestPrice":
-						int OrderId = is.readInt();
-						int sliceID = is.readInt();
+						int OrderId = isr.readInt();
+						int sliceID = isr.readInt();
 
 						Order slice = orders.get(OrderId).getSlices().get(sliceID);
 						//TODO::I commented this out. Should I create a method in Order called setBestPrice(int routerID, double price)
@@ -110,7 +112,7 @@ public class OrderManager {
 							reallyRouteOrder(sliceID, slice);
 						break;
 					case "newFill":
-						newFill(is.readInt(), is.readInt(), is.readInt(), is.readDouble());
+						newFill(isr.readInt(), isr.readInt(), isr.readInt(), isr.readDouble());
 						break;
 				}
 			}
