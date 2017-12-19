@@ -26,7 +26,7 @@
         <entry file="file://$PROJECT_DIR$/test/Main.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
-              <caret line="3" column="37" lean-forward="true" selection-start-line="3" selection-start-column="37" selection-end-line="3" selection-end-column="37" />
+              <caret line="3" column="37" lean-forward="false" selection-start-line="3" selection-start-column="37" selection-end-line="3" selection-end-column="37" />
               <folding />
             </state>
           </provider>
@@ -35,8 +35,8 @@
       <file leaf-file-name="OrderManager.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/OrderManager/OrderManager.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4658">
-              <caret line="291" column="56" lean-forward="true" selection-start-line="291" selection-start-column="56" selection-end-line="291" selection-end-column="56" />
+            <state relative-caret-position="595">
+              <caret line="97" column="69" lean-forward="true" selection-start-line="97" selection-start-column="69" selection-end-line="97" selection-end-column="69" />
               <folding />
             </state>
           </provider>
@@ -499,6 +499,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="527">
           <caret line="31" column="1" lean-forward="false" selection-start-line="31" selection-start-column="1" selection-end-line="31" selection-end-column="1" />
+          <folding>
+            <element signature="imports" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -537,6 +540,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="170">
           <caret line="10" column="0" lean-forward="true" selection-start-line="10" selection-start-column="0" selection-end-line="10" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -590,6 +594,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="162">
           <caret line="241" column="6" lean-forward="false" selection-start-line="241" selection-start-column="6" selection-end-line="241" selection-end-column="6" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -624,14 +629,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test/Main.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="3" column="37" lean-forward="true" selection-start-line="3" selection-start-column="37" selection-end-line="3" selection-end-column="37" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/test/Trader.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="34">
@@ -640,10 +637,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/test/Main.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="3" column="37" lean-forward="false" selection-start-line="3" selection-start-column="37" selection-end-line="3" selection-end-column="37" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/OrderManager/OrderManager.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4658">
-          <caret line="291" column="56" lean-forward="true" selection-start-line="291" selection-start-column="56" selection-end-line="291" selection-end-column="56" />
+        <state relative-caret-position="595">
+          <caret line="97" column="69" lean-forward="true" selection-start-line="97" selection-start-column="69" selection-end-line="97" selection-end-column="69" />
           <folding />
         </state>
       </provider>

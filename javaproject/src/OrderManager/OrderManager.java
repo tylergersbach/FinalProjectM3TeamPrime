@@ -82,6 +82,7 @@ public class OrderManager {
 						newOrder(clientId, isc.readInt(), (NewOrderSingle)isc.readObject());
 						break;
 					//TODO create a default case which errors with "Unknown message type"+...
+					default: throw new IOException("Unknown message type");
 				}
 			}
 		}
