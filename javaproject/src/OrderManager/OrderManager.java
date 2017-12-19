@@ -55,10 +55,6 @@ public class OrderManager {
 			i++;
 		}
 
-		runOM();
-	}
-
-	private void runOM() throws IOException, ClassNotFoundException{
 		while(true){
 			checkClients();
 			checkRouters();
