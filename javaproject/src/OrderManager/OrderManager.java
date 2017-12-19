@@ -1,5 +1,6 @@
 package OrderManager;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -20,10 +21,10 @@ import TradeScreen.TradeScreen;
 
 public class OrderManager {
 
-	private static LiveMarketData liveMarketData;
-	private HashMap<Integer,Order> orders = new HashMap<Integer,Order>(); //debugger will do this line as it gives state to the object
+	private LiveMarketData liveMarketData; //Changed from static to non static
+	private Map<Integer,Order> orders; //debugger will do this line as it gives state to the object
 	//currently recording the number of new order messages we get. TODO why? use it for more?
-	private int id = 0; //debugger will do this line as it gives state to the object
+	private int id; //debugger will do this line as it gives state to the object
 	private Socket[] orderRouters; //debugger will skip these lines as they dissapear at compile time into 'the object'/stack
 	private Socket[] clients;
 	private Socket trader;
@@ -32,8 +33,11 @@ public class OrderManager {
 	//TODO::Break this method up into smaller methods
 	//@param args the command line arguments
 	public OrderManager(InetSocketAddress[] orderRouters, InetSocketAddress[] clients,InetSocketAddress trader,LiveMarketData liveMarketData)throws IOException, ClassNotFoundException, InterruptedException{
+
 		this.liveMarketData = liveMarketData;
+		orders = new HashMap<>();
 		this.trader = connect(trader);
+
 		//for the router connections, copy the input array into our object field.
 		//but rather than taking the address we create a socket+ephemeral port and connect it to the address
 		this.orderRouters = new Socket[orderRouters.length];
@@ -51,69 +55,84 @@ public class OrderManager {
 			i++;
 		}
 
-		int clientId, routerId;
-		Socket client, router;
-		//main loop, wait for a message, then process it
+		runOM();
+	}
+
+	private void runOM() throws IOException, ClassNotFoundException{
 		while(true){
-			//TODO this is pretty cpu intensive, use a more modern polling/interrupt/select approach
-			//we want to use the arrayindex as the clientId, so use traditional for loop instead of foreach
-			for (clientId = 0; clientId < this.clients.length; clientId++){ //check if we have data on any of the sockets
-				client = this.clients[clientId];
-				if (0 < client.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
-					//TODO::Change this so that it is only created once
-					ObjectInputStream is = new ObjectInputStream(client.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
-					String method = (String)is.readObject();
-					System.out.println(Thread.currentThread().getName()+" calling "+method);
-					switch(method){ //determine the type of message and process it
-						//call the newOrder message with the clientId and the message (clientMessageId,NewOrderSingle)
-						case "newOrderSingle":
-							newOrder(clientId, is.readInt(), (NewOrderSingle)is.readObject());
-							break;
-						//TODO create a default case which errors with "Unknown message type"+...
-					}
-				}
-			}
+			checkClients();
+			checkRouters();
+			checkTrader();
+		}
+	}
 
-			for (routerId = 0; routerId < this.orderRouters.length; routerId++){ //check if we have data on any of the sockets
-				router = this.orderRouters[routerId];
-				if (0 < router.getInputStream().available()){ //if we have part of a message ready to read, assuming this doesn't fragment messages
-					//TODO::Change this so that it is only created once
-					ObjectInputStream is = new ObjectInputStream(router.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
-					String method = (String)is.readObject();
-					System.out.println(Thread.currentThread().getName()+" calling "+method);
-					switch(method){ //determine the type of message and process it
-						case "bestPrice":
-							int OrderId = is.readInt();
-							int sliceID = is.readInt();
-
-							Order slice = orders.get(OrderId).getSlices().get(sliceID);
-							//TODO::I commented this out. Should I create a method in Order called setBestPrice(int routerID, double price)
-							//TODO::Maybe even make best prices a hashMap
-							//slice.bestPrices[routerId] = is.readDouble();
-							slice.setBestPriceCount(slice.getBestPriceCount() + 1);
-
-							if(slice.getBestPriceCount() == slice.getBestPriceLength())
-								reallyRouteOrder(sliceID, slice);
-							break;
-						case "newFill":
-							newFill(is.readInt(), is.readInt(), is.readInt(), is.readDouble());
-							break;
-					}
-				}
-			}
-
-			if (0 < this.trader.getInputStream().available()){
-				ObjectInputStream is = new ObjectInputStream(this.trader.getInputStream());
+	private void checkClients() throws IOException, ClassNotFoundException{
+		int clientId;
+		Socket client;
+		//TODO this is pretty cpu intensive, use a more modern polling/interrupt/select approach
+		//we want to use the arrayindex as the clientId, so use traditional for loop instead of foreach
+		for (clientId = 0; clientId < this.clients.length; clientId++){ //check if we have data on any of the sockets
+			client = this.clients[clientId];
+			if (0 < client.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
+				//TODO::Change this so that it is only created once
+				ObjectInputStream is = new ObjectInputStream(client.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
 				String method = (String)is.readObject();
 				System.out.println(Thread.currentThread().getName()+" calling "+method);
-				switch(method){
-					case "acceptOrder":
-						acceptOrder(is.readInt());
+				switch(method){ //determine the type of message and process it
+					//call the newOrder message with the clientId and the message (clientMessageId,NewOrderSingle)
+					case "newOrderSingle":
+						newOrder(clientId, is.readInt(), (NewOrderSingle)is.readObject());
 						break;
-					case "sliceOrder":
-						sliceOrder(is.readInt(), is.readInt());
+					//TODO create a default case which errors with "Unknown message type"+...
+				}
+			}
+		}
+	}
+
+	private void checkRouters() throws IOException, ClassNotFoundException{
+		int routerId;
+		Socket router;
+		for (routerId = 0; routerId < this.orderRouters.length; routerId++){ //check if we have data on any of the sockets
+			router = this.orderRouters[routerId];
+			if (0 < router.getInputStream().available()){ //if we have part of a message ready to read, assuming this doesn't fragment messages
+				//TODO::Change this so that it is only created once
+				ObjectInputStream is = new ObjectInputStream(router.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
+				String method = (String)is.readObject();
+				System.out.println(Thread.currentThread().getName()+" calling "+method);
+				switch(method){ //determine the type of message and process it
+					case "bestPrice":
+						int OrderId = is.readInt();
+						int sliceID = is.readInt();
+
+						Order slice = orders.get(OrderId).getSlices().get(sliceID);
+						//TODO::I commented this out. Should I create a method in Order called setBestPrice(int routerID, double price)
+						//TODO::Maybe even make best prices a hashMap
+						//slice.bestPrices[routerId] = is.readDouble();
+						slice.setBestPriceCount(slice.getBestPriceCount() + 1);
+
+						if(slice.getBestPriceCount() == slice.getBestPriceLength())
+							reallyRouteOrder(sliceID, slice);
+						break;
+					case "newFill":
+						newFill(is.readInt(), is.readInt(), is.readInt(), is.readDouble());
 						break;
 				}
+			}
+		}
+	}
+
+	private void checkTrader() throws IOException, ClassNotFoundException{
+		if (0 < this.trader.getInputStream().available()){
+			ObjectInputStream is = new ObjectInputStream(this.trader.getInputStream());
+			String method = (String)is.readObject();
+			System.out.println(Thread.currentThread().getName()+" calling "+method);
+			switch(method){
+				case "acceptOrder":
+					acceptOrder(is.readInt());
+					break;
+				case "sliceOrder":
+					sliceOrder(is.readInt(), is.readInt());
+					break;
 			}
 		}
 	}
@@ -161,7 +180,7 @@ public class OrderManager {
 		ost.flush();
 	}
 
-	public void acceptOrder(int id) throws IOException{
+	private void acceptOrder(int id) throws IOException{
 		Order o = orders.get(id);
 		if(o.getOrderStatus() != 'A'){ //Pending New
 			System.out.println("error accepting order that has already been accepted");
@@ -178,7 +197,7 @@ public class OrderManager {
 		price(id,o);
 	}
 
-	public void sliceOrder(int id,int sliceSize) throws IOException{
+	private void sliceOrder(int id,int sliceSize) throws IOException{
 		Order o = orders.get(id);
 		//slice the order. We have to check this is a valid size.
 		//Order has a list of slices, and a list of fills, each slice is a childorder and each fill is associated with either a child order or the original order
