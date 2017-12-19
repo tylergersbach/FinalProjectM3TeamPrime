@@ -44,6 +44,7 @@ public class SampleRouter extends Thread implements Router{
 			e.printStackTrace();
 		}
 	}
+
 	@Override
 	public void routeOrder(int id,int sliceId,int size,Instrument i) throws IOException, InterruptedException{ //MockI.show(""+order);
 		int fillSize=RANDOM_NUM_GENERATOR.nextInt(size);

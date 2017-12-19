@@ -14,12 +14,15 @@ public class Trader extends Thread implements TradeScreen{
 	private HashMap<Integer,Order> orders=new HashMap<Integer,Order>();
 	private static Socket omConn;
 	private int port;
+
 	Trader(String name,int port){
 		this.setName(name);
 		this.port=port;
 	}
+
 	ObjectInputStream  is;
 	ObjectOutputStream os;
+
 	public void run(){
 		//OM will connect to us
 		try {
@@ -64,18 +67,20 @@ public class Trader extends Thread implements TradeScreen{
 		os.flush();
 	}
 
+	//TODO::If in class Order.java it says size should be a long, that means the interface must change for interface method below
+	//TODO::Must take an int and a long, not int and int, I changed it for now
 	@Override
-	public void sliceOrder(int id, int sliceSize) throws IOException {
+	public void sliceOrder(int id, long sliceSize) throws IOException {
 		os=new ObjectOutputStream(omConn.getOutputStream());
 		os.writeObject("sliceOrder");
 		os.writeInt(id);
-		os.writeInt(sliceSize);
+		os.writeLong(sliceSize);		//TODO::Changed from os.writeInt to os.writeLong
 		os.flush();
 	}
 	@Override
 	public void price(int id,Order o) throws InterruptedException, IOException {
 		//TODO should update the trade screen
 		Thread.sleep(2134);
-		sliceOrder(id,orders.get(id).sizeRemaining()/2);
+		sliceOrder(id,orders.get(id).sizeRemaining() / 2);
 	}
 }

@@ -4,7 +4,7 @@ package Database;
 
 //TODO::maybe make this an interface?
 public class Database{
-	public static void write(Object o){
+	public static void write(Object o) {
 		System.out.println(o.toString());
 	}
 }

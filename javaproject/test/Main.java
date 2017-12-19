@@ -12,10 +12,9 @@ public class Main{
 
 		//TODO::consistency?
 		//start sample clients
-		//MockClient c1=new MockClient("Client 1",2000);
-		//c1.start();
-		(new MockClient("Client 1",2000)).start();
-
+		MockClient c1 = new MockClient("Client 1",2000);
+		c1.start();
+		//(new MockClient("Client 1",2000)).start();
 		(new MockClient("Client 2",2001)).start();
 		
 		//start sample routers
@@ -24,20 +23,19 @@ public class Main{
 	
 		(new Trader("Trader James",2020)).start();
 		//start order manager
-		InetSocketAddress[] clients={new InetSocketAddress("localhost",2000),
+		InetSocketAddress[] clients = {new InetSocketAddress("localhost",2000),
 				new InetSocketAddress("localhost",2001)};
-		InetSocketAddress[] routers={new InetSocketAddress("localhost",2010),
+		InetSocketAddress[] routers = {new InetSocketAddress("localhost",2010),
 				new InetSocketAddress("localhost",2011)};
-		InetSocketAddress trader=new InetSocketAddress("localhost",2020);
-		LiveMarketData liveMarketData=new SampleLiveMarketData();
+		InetSocketAddress trader = new InetSocketAddress("localhost",2020);
+		LiveMarketData liveMarketData = new SampleLiveMarketData();
 		(new MockOM("Order Manager",routers,clients,trader,liveMarketData)).start();
 	}
 }
 
 class MockClient extends Thread{
 
-
-	int port;
+	private int port;
 
 	MockClient(String name,int port){
 		this.port=port;
@@ -50,7 +48,7 @@ class MockClient extends Thread{
 			if(port==2000){
 				//TODO why does this take an arg?
 				client.sendOrder(null);
-				int id=client.sendOrder(null);
+				int id = client.sendOrder(null);
 				//TODO client.sendCancel(id);
 
 				client.messageHandler();
@@ -62,16 +60,16 @@ class MockClient extends Thread{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 	}
-
 }
 
 class MockOM extends Thread{
+
 	InetSocketAddress[] clients;
 	InetSocketAddress[] routers;
 	InetSocketAddress trader;
 	LiveMarketData liveMarketData;
+
 	MockOM(String name,InetSocketAddress[] routers,InetSocketAddress[] clients,InetSocketAddress trader,LiveMarketData liveMarketData){
 		this.clients=clients;
 		this.routers=routers;
@@ -81,7 +79,7 @@ class MockOM extends Thread{
 	}
 	@Override
 	public void run(){
-		try{
+		try {
 			//In order to debug constructors you can do F5 F7 F5
 			new OrderManager(routers,clients,trader,liveMarketData);
 		}catch(IOException | ClassNotFoundException | InterruptedException ex){
