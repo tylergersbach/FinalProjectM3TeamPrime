@@ -14,8 +14,8 @@ public class Order implements Serializable {
 	private long orderRouter;
 	private long clientOrderID; 	//TODO refactor to lowercase C [DONE: JORGE]
 	private long size;
-	private double[] bestPrices;	//JORGE: This stays a double because we are dealing with prices. Maybe set as a hashmap instead
-	private long bestPriceCount;
+	private double[] bestPrices;	//JORGE: This stays a double because we are dealing with prices. Maybe set as a hashmap instead.
+	private int bestPriceCount;
 
 	//TODO::Moved these up from below some methods and made them private [DONE: JORGE]
 	private int clientID;
@@ -61,15 +61,20 @@ public class Order implements Serializable {
 		return this.bestPrices.length;
 	}
 
+	//TODO: we added the method: setBestPrice - to set into the double[] bestPrices- to a certain index
+	public void setBestPrice(int index , double price){
+		this.bestPrices[index] = price;
+	}
+
 	public double getBestPrice(int index) {
 		return this.bestPrices[index];
 	}
 
-	public void setBestPriceCount(long count) {
+	public void setBestPriceCount(int count) {
 		this.bestPriceCount = count;
 	}
 
-	public long getBestPriceCount() {
+	public int getBestPriceCount() {
 		return this.bestPriceCount;
 	}
 
@@ -99,13 +104,13 @@ public class Order implements Serializable {
 		long totalSizeOfSlices = 0;
 		for (Order c : slices)
 			totalSizeOfSlices += c.size;
-
 		return totalSizeOfSlices;
 	}
 
 	//TODO::Changed slice type from type int to type long to match requirements
 	public int newSlice(long sliceSize){
-		slices.add(new Order(id, clientOrderID, instrument, sliceSize));
+		Order slice = new Order(id, clientOrderID, instrument, sliceSize);
+		slices.add(slice);
 		return slices.size() - 1;
 	}
 

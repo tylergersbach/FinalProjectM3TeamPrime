@@ -27,12 +27,14 @@ public class SampleRouter extends Thread implements Router{
 		try {
 			omConn=ServerSocketFactory.getDefault().createServerSocket(port).accept();
 			while(true){
+				sleep(1);
 				if(0<omConn.getInputStream().available()){
 					is=new ObjectInputStream(omConn.getInputStream());
 					Router.api methodName=(Router.api)is.readObject();
 					System.out.println("Order Router recieved method call for:"+methodName);
+
 					switch(methodName){
-						case routeOrder:routeOrder(is.readInt(),is.readInt(),is.readInt(),(Instrument)is.readObject());break;
+						case routeOrder:routeOrder(is.readInt(),is.readInt(),is.readLong(),(Instrument)is.readObject(),is.readDouble());break;
 						case priceAtSize:priceAtSize(is.readInt(),is.readInt(),(Instrument)is.readObject(),is.readInt());break;
 					}
 				}else{
@@ -46,11 +48,16 @@ public class SampleRouter extends Thread implements Router{
 	}
 
 	@Override
-	public void routeOrder(int id,int sliceId,int size,Instrument i) throws IOException, InterruptedException{ //MockI.show(""+order);
-		int fillSize=RANDOM_NUM_GENERATOR.nextInt(size);
-		//TODO have this similar to the market price of the instrument
-		double fillPrice=199*RANDOM_NUM_GENERATOR.nextDouble();
+	//TODO THIS IS NOT RUNNING
+	public void routeOrder(int id,int sliceId,long size,Instrument i,double price) throws IOException, InterruptedException{ //MockI.show(""+order);
+
+		int fillSize=RANDOM_NUM_GENERATOR.nextInt((int) size);
+//		//TODO have this similar to the market price of the instrument
+//		double fillPrice=199*RANDOM_NUM_GENERATOR.nextDouble();
+
+		double fillPrice = price;
 		Thread.sleep(42);
+
 		os=new ObjectOutputStream(omConn.getOutputStream());
 		os.writeObject("newFill");
 		os.writeInt(id);
@@ -70,6 +77,7 @@ public class SampleRouter extends Thread implements Router{
 		os.writeInt(id);
 		os.writeInt(sliceId);
 		os.writeDouble(199*RANDOM_NUM_GENERATOR.nextDouble());
+
 		os.flush();
 	}
 }

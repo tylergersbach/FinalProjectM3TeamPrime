@@ -19,6 +19,8 @@ import OrderRouter.Router;
 import OrderRouter.Router.api;
 import TradeScreen.TradeScreen;
 
+import static java.lang.Thread.sleep;
+
 public class OrderManager {
 
 	private LiveMarketData liveMarketData; //Changed from static to non static
@@ -58,6 +60,7 @@ public class OrderManager {
 		}
 
 		while(true){
+			sleep(1);
 			checkClients();
 			checkRouters();
 			checkTrader();
@@ -78,7 +81,7 @@ public class OrderManager {
 				System.out.println(Thread.currentThread().getName()+" calling "+method);
 				switch(method){ //determine the type of message and process it
 					//call the newOrder message with the clientId and the message (clientMessageId,NewOrderSingle)
-					case "newOrderSingle":
+					case "35=D":
 						newOrder(clientId, isc.readInt(), (NewOrderSingle)isc.readObject());
 						break;
 					//TODO create a default case which errors with "Unknown message type"+...
@@ -104,13 +107,19 @@ public class OrderManager {
 						int sliceID = isr.readInt();
 
 						Order slice = orders.get(OrderId).getSlices().get(sliceID);
+
+
+
 						//TODO::I commented this out. Should I create a method in Order called setBestPrice(int routerID, double price)
 						//TODO::Maybe even make best prices a hashMap
+
+						double currentPrice = isr.readDouble();
 						//slice.bestPrices[routerId] = is.readDouble();
+						slice.setBestPrice(slice.getBestPriceCount() , currentPrice);
 						slice.setBestPriceCount(slice.getBestPriceCount() + 1);
 
 						if(slice.getBestPriceCount() == slice.getBestPriceLength())
-							reallyRouteOrder(sliceID, slice);
+							routeOrderToBestPricedRouter(sliceID, slice);
 						break;
 					case "newFill":
 						newFill(isr.readInt(), isr.readInt(), isr.readInt(), isr.readDouble());
@@ -118,6 +127,7 @@ public class OrderManager {
 				}
 			}
 		}
+
 	}
 
 	private void checkTrader() throws IOException, ClassNotFoundException{
@@ -130,7 +140,15 @@ public class OrderManager {
 					acceptOrder(is.readInt());
 					break;
 				case "sliceOrder":
-					sliceOrder(is.readInt(), is.readInt());
+
+					//TODO: sliceSize is now long, which is causing OptionalDataException in future processes
+					int id = is.readInt();
+					long sliceSize=is.readLong();
+					System.out.println("OrderManager size remaining is:"+orders.get(id).sizeRemaining());
+
+					System.out.println("OrderManager-Slice size is:"+sliceSize);
+
+					sliceOrder(id, sliceSize );
 					break;
 			}
 		}
@@ -156,12 +174,19 @@ public class OrderManager {
 	}
 
 	private void newOrder(int clientId, int clientOrderId, NewOrderSingle nos) throws IOException{
-		orders.put(id, new Order(clientId, clientOrderId, nos.getInstrument(), nos.getSize()));			//TODO::Replaced nos.instrument with getters b/c now private
+		//cezar:replaced in put the whole new Order(...) with order, that is defined below
+		Order order =  new Order(clientId, clientOrderId, nos.getInstrument(), nos.getSize());
+		orders.put(id, order);			//TODO::Replaced nos.instrument with getters b/c now private
+
 		//send a message to the client with 39=A; //OrdStatus is Fix 39, 'A' is 'Pending New'
 		ObjectOutputStream os = new ObjectOutputStream(clients[clientId].getOutputStream());
 		//newOrderSingle acknowledgement
 		//ClOrdId is 11=
-		os.writeObject("11="+clientOrderId+";35=A;39=A;");
+		os.writeObject("11="+clientOrderId+";39=A;");
+
+		//leeann - writitng order to client output stream
+		os.writeObject(order);
+		//os.writeObject(
 		os.flush();
 
 		//send the new order to the trading screen
@@ -180,39 +205,60 @@ public class OrderManager {
 	}
 
 	private void acceptOrder(int id) throws IOException{
-		Order o = orders.get(id);
-		if(o.getOrderStatus() != 'A'){ //Pending New
+		Order order = orders.get(id);
+		//TODO: check where the order status is added
+		if(order.getOrderStatus() != 'A'){ //Pending New
 			System.out.println("error accepting order that has already been accepted");
 			return;
 		}
 
-		o.setOrderStatus('0'); //New
-		ObjectOutputStream os = new ObjectOutputStream(clients[o.getClientID()].getOutputStream());
+		order.setOrderStatus('0'); //New
+		ObjectOutputStream os = new ObjectOutputStream(clients[order.getClientID()].getOutputStream());
 		//newOrderSingle acknowledgement
 		//ClOrdId is 11=
-		os.writeObject("11="+o.getClientOrderID()+";35=A;39=0");
+		os.writeObject("11="+order.getClientOrderID()+";39=0");
+		os.writeObject(order);
 		os.flush();
 
-		price(id,o);
+		price(id,order);
 	}
 
-	private void sliceOrder(int id,int sliceSize) throws IOException{
-		Order o = orders.get(id);
+	private void sliceOrder(int id,long sliceSize) throws IOException{
+		Order order = orders.get(id);
 		//slice the order. We have to check this is a valid size.
 		//Order has a list of slices, and a list of fills, each slice is a childorder and each fill is associated with either a child order or the original order
-		if (sliceSize > o.sizeRemaining() - o.sliceSizes()){
+
+//		System.out.println("sliceSize: : "+sliceSize);
+//		System.out.println("order.sizeRemaining: "+ order.sizeRemaining());
+//		System.out.println("1order.sliceSizes: "+order.sliceSizes());
+
+		if (sliceSize > order.sizeRemaining() - order.sliceSizes()){
 			System.out.println("error sliceSize is bigger than remaining size to be filled on the order");
 			return;
 		}
 
-		int sliceId = o.newSlice(sliceSize);
-		Order slice = o.getSlices().get(sliceId);
+		int sliceId = order.newSlice(sliceSize);
+
+		Order slice = order.getSlices().get(sliceId);
 		internalCross(id, slice);
 		//TODO::Changed this from an int to a long to meet variable specs
-		long sizeRemaining = o.getSlices().get(sliceId).sizeRemaining();
+		long sizeRemaining = order.getSlices().get(sliceId).sizeRemaining();
+
+		if (sizeRemaining == 0) {
+
+			//TODO if the slice is 0 then let the client know that the order is completed
+			//!!!TODO WE HAVE TO LET ORDER KNOW
+			//TODO We have to check the ID of the order that is completed
+			ObjectOutputStream os = new ObjectOutputStream(clients[order.getClientID()].getOutputStream());
+			os.writeObject("11=" + order.getClientOrderID() + ";39=2");
+			os.writeObject(order);
+			os.flush();
+		}
+		System.out.println("!!!!!!!!!! size remaining"+sizeRemaining);
 		if(sizeRemaining > 0){
 			routeOrder(id, sliceId, sizeRemaining, slice);
 		}
+
 	}
 	private void internalCross(int id, Order o) throws IOException{
 		for (Map.Entry<Integer, Order> entry : orders.entrySet()){
@@ -248,6 +294,10 @@ public class OrderManager {
 	//TODO::this might mean we are selling the order
 	//TODO::Changed size from int to long
 	private void routeOrder(int id, int sliceId, long size, Order order) throws IOException{
+		//need to wait for these prices to come back before routing
+		order.setBestPrices(new double[orderRouters.length]);			//TODO::Changed from order.bestPrices = new double[orderRouters.length to method call
+		order.setBestPriceCount(0);										//TODO::Changed from assignment to method call
+
 		for (Socket r : orderRouters){
 			ObjectOutputStream os = new ObjectOutputStream(r.getOutputStream());
 			os.writeObject(Router.api.priceAtSize);
@@ -257,13 +307,11 @@ public class OrderManager {
 			os.writeLong(order.sizeRemaining());		//TODO::Changed from os.writeInt to os.writeLong
 			os.flush();
 		}
-		//need to wait for these prices to come back before routing
-		order.setBestPrices(new double[orderRouters.length]);			//TODO::Changed from order.bestPrices = new double[orderRouters.length to method call
-		order.setBestPriceCount(0);										//TODO::Changed from assignment to method call
+
 	}
 
 	//TODO::this is looking for the best price, maybe rename this to lookForBestPrice()
-	private void reallyRouteOrder(int sliceId,Order o) throws IOException{
+	private void routeOrderToBestPricedRouter(int sliceId,Order o) throws IOException{
 		//TODO this assumes we are buying rather than selling
 		int minIndex = 0;
 		double min = o.getBestPrice(0);		//TODO::added a way to get elements via method that takes in an index
@@ -273,13 +321,16 @@ public class OrderManager {
 				min = o.getBestPrice(i);
 			}
 		}
+		System.out.println("Minimum price found: index "+minIndex + " for value: "+min);
 
+		//TODO WE HAVE TO SEND THE PRICE TO THE SPECIFIC ROUTER.
 		ObjectOutputStream os = new ObjectOutputStream(orderRouters[minIndex].getOutputStream());
 		os.writeObject(Router.api.routeOrder);
 		os.writeInt(o.getID());					//TODO::Changed to getter method instead of o.id
 		os.writeInt(sliceId);
 		os.writeLong(o.sizeRemaining());		//TODO::changed from os.writeInt to o.writeLong to match var spec
 		os.writeObject(o.getInstrument());		//TODO::changed from o.instrument to o.getInstrument
+		os.writeDouble(min);
 		os.flush();
 	}
 

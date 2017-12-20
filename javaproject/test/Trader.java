@@ -31,6 +31,7 @@ public class Trader extends Thread implements TradeScreen{
 			//is=new ObjectInputStream( omConn.getInputStream());
 			InputStream s=omConn.getInputStream(); //if i try to create an objectinputstream before we have data it will block
 			while(true){
+				sleep(1);
 				if(0<s.available()){
 					is=new ObjectInputStream(s);  //TODO check if we need to create each time. this will block if no data, but maybe we can still try to create it once instead of repeatedly
 					api method=(api)is.readObject();
@@ -81,6 +82,7 @@ public class Trader extends Thread implements TradeScreen{
 	public void price(int id,Order o) throws InterruptedException, IOException {
 		//TODO should update the trade screen
 		Thread.sleep(2134);
+		//System.out.println("Size is:"+orders.get(id).sizeRemaining());
 		sliceOrder(id,orders.get(id).sizeRemaining() / 2);
 	}
 }

@@ -9,9 +9,12 @@ public class Main{
 
 		//TODO::consistency?
 		//start sample clients
+
+		//todo:!!!!have only oneclient
+		System.out.printf("            Main.java.... ONE CLIENT WILL BE CREATED \n");
 		(new MockClient("Client 1",2000)).start();
-		//(new MockClient("Client 1",2000)).start();
-		(new MockClient("Client 2",2001)).start();
+
+		//(new MockClient("Client 2",2001)).start();
 		
 		//start sample routers
 		(new SampleRouter("Router LSE",2010)).start();
@@ -19,10 +22,9 @@ public class Main{
 	
 		(new Trader("Trader James",2020)).start();
 		//start order manager
-		InetSocketAddress[] clients = {new InetSocketAddress("localhost",2000),
-				new InetSocketAddress("localhost",2001)};
-		InetSocketAddress[] routers = {new InetSocketAddress("localhost",2010),
-				new InetSocketAddress("localhost",2011)};
+		//todo:!!!!!pass a list of only one client
+		InetSocketAddress[] clients = {new InetSocketAddress("localhost",2000)};//, new InetSocketAddress("localhost",2001)};
+		InetSocketAddress[] routers = {new InetSocketAddress("localhost",2010), new InetSocketAddress("localhost",2011)};
 		InetSocketAddress trader = new InetSocketAddress("localhost",2020);
 		LiveMarketData liveMarketData = new SampleLiveMarketData();
 		(new MockOM("Order Manager",routers,clients,trader,liveMarketData)).start();
